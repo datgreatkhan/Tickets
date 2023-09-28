@@ -1,12 +1,10 @@
 package com.khan.tickets.demo.controller;
 
-import com.khan.tickets.demo.model.Ticket;
+import com.khan.tickets.demo.data.UserSummary;
 import com.khan.tickets.demo.model.User;
 import com.khan.tickets.demo.model.UserRole;
-import com.khan.tickets.demo.repository.AssignmentRepository;
-import com.khan.tickets.demo.repository.TicketCommentRepository;
-import com.khan.tickets.demo.repository.TicketRepository;
 import com.khan.tickets.demo.repository.UserRepository;
+import com.khan.tickets.demo.service.UserSummaryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,14 +18,16 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/user")
+/**
+ * Controller that deals with anything directly with the user.
+ * This contains mainly view based endpoints, such as user summary.
+ */
 public class UserController {
 
     private static final List<UserRole> ADMIN_OR_SUPPORT = Arrays.asList(UserRole.ADMIN, UserRole.SUPPORT);
@@ -36,14 +36,11 @@ public class UserController {
     private UserRepository userRepository;
 
     @Autowired
-    private TicketRepository ticketRepository;
+    private UserSummaryService userSummaryService;
 
-    @Autowired
-    private AssignmentRepository assignmentRepository;
-
-    @Autowired
-    private TicketCommentRepository commentRepository;
-
+    /* This is not an ideal way to deal with permissions/roles in Spring
+       I just wrote this to save time. :)
+    */
     private boolean isSupportOrAdminRole(OAuth2AuthenticatedPrincipal principal) {
         Optional<User> userOptional = userRepository.findByEmail(principal.getAttribute("email"));
 
@@ -56,12 +53,6 @@ public class UserController {
 
         return false;
     }
-
-    private record UserSummary(Instant joinedAt,
-                               Instant lastUpdated,
-                               long totalTickets,
-                               long totalAssignments,
-                               long totalComments) {}
 
     @GetMapping("/{id}")
     public ResponseEntity<User> get(@AuthenticationPrincipal OAuth2AuthenticatedPrincipal principal,
@@ -127,15 +118,7 @@ public class UserController {
             user = userOptional.get();
         }
 
-        Instant joinDate = user.getCreatedAt();
-        Instant lastUpdated = user.getUpdatedAt();
-
-        long totalTickets = ticketRepository.countByOwner(user);
-        long totalAssignments = assignmentRepository.countByAssignee(user);
-
-        long totalComments = commentRepository.countByOwner(user);
-
-        return new ResponseEntity<>(new UserSummary(joinDate, lastUpdated, totalTickets, totalAssignments, totalComments), HttpStatus.OK);
+        return new ResponseEntity<>(userSummaryService.getSummaryOf(user), HttpStatus.OK);
     }
 
     @GetMapping("/summary/{id}")
@@ -149,20 +132,14 @@ public class UserController {
 
         Optional<User> targetUser = userRepository.findById(id);
 
+        User user;
+
         if(targetUser.isEmpty()) {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }else{
+            user = targetUser.get();
         }
 
-        User user = targetUser.get();
-
-        Instant joinDate = user.getCreatedAt();
-        Instant lastUpdated = user.getUpdatedAt();
-
-        long totalTickets = ticketRepository.countByOwner(user);
-        long totalAssignments = assignmentRepository.countByAssignee(user);
-
-        long totalComments = commentRepository.countByOwner(user);
-
-        return new ResponseEntity<>(new UserSummary(joinDate, lastUpdated, totalTickets, totalAssignments, totalComments), HttpStatus.OK);
+        return new ResponseEntity<>(userSummaryService.getSummaryOf(user), HttpStatus.OK);
     }
 }

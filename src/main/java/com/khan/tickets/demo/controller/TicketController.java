@@ -3,6 +3,7 @@ package com.khan.tickets.demo.controller;
 import com.khan.tickets.demo.model.*;
 import com.khan.tickets.demo.repository.TicketRepository;
 import com.khan.tickets.demo.repository.UserRepository;
+import com.khan.tickets.demo.service.TicketCreationService;
 import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,10 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/ticket")
+/**
+ * Controller that deals with all Ticket related action, view or state.
+ * Examples include things such as creating, updating, etc.
+ */
 public class TicketController {
 
     /*
@@ -40,6 +45,9 @@ public class TicketController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private TicketCreationService ticketCreationService;
 
     private Optional<User> getUser(OAuth2AuthenticatedPrincipal principal) {
         if(principal == null) {
@@ -256,11 +264,11 @@ public class TicketController {
             owner = user.get();
         }
 
-        Ticket ticket = new Ticket(owner, ticketData.getTitle(), ticketData.getType(), TicketStatus.UNASSIGNED, ticketData.getBody());
-
-        ticketRepository.save(ticket);
-
-        return new ResponseEntity<>(HttpStatus.OK);
+        if(ticketCreationService.createTicket(owner, ticketData)) {
+            return new ResponseEntity<>(HttpStatus.OK);
+        }else{
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping("/update-assignees")

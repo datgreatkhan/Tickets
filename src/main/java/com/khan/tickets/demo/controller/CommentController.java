@@ -18,6 +18,9 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/comment")
+/**
+ * Controller for anything related directly to a comment on a Ticket, such as editing.
+ */
 public class CommentController {
 
     @Autowired

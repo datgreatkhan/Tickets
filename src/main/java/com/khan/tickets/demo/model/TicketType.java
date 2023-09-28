@@ -1,7 +1,25 @@
 package com.khan.tickets.demo.model;
 
+/**
+ * Enum representation of the type of ticket.
+ */
 public enum TicketType {
-    ISSUE(0), INQUIRY(1), REPORT(2), OTHER(3);
+    /**
+     * Represents a general issue.
+     */
+    ISSUE(0),
+    /**
+     * Represents a general question or inquiry.
+     */
+    INQUIRY(1),
+    /**
+     * Represents a report of another user or problem.
+     */
+    REPORT(2),
+    /**
+     * Represents something that doesn't fall under the other categories.
+     */
+    OTHER(3);
 
     private int id;
 

@@ -15,6 +15,9 @@ import java.io.IOException;
 import java.util.Optional;
 
 @Controller
+/**
+ * Controller that deals with user's login and session (here, the session is just simple data about the user).
+ */
 public class LoginController {
 
     @Autowired
